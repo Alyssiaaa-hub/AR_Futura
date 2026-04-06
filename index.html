@@ -52,7 +52,12 @@
           this.el.addEventListener("targetFound", () => {
             video.currentTime = 0;
             video.muted = true;
-            video.play().catch(e => console.log("Play error:", e));
+            const tryPlay = () => {
+              video.play().catch(() => {
+                document.addEventListener("click", () => video.play(), { once: true });
+              });
+            };
+            tryPlay();
           });
           this.el.addEventListener("targetLost", () => {
             video.pause();
