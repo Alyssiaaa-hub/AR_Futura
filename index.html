@@ -10,9 +10,23 @@
     <style>
       * { margin: 0; padding: 0; }
       body { overflow: hidden; }
+      #play-btn {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 999;
+        background: white;
+        border: none;
+        padding: 14px 32px;
+        font-size: 18px;
+        border-radius: 30px;
+        display: none;
+      }
     </style>
   </head>
   <body>
+    <button id="play-btn">▶ Lancer</button>
     <a-scene
       mindar-image="imageTargetSrc: targets.mind; autoStart: true;"
       color-space="sRGB"
@@ -46,21 +60,26 @@
       </a-entity>
     </a-scene>
     <script>
+      const video = document.querySelector("#futura-video");
+      const btn = document.querySelector("#play-btn");
+
+      btn.addEventListener("click", () => {
+        video.play();
+        btn.style.display = "none";
+      });
+
       AFRAME.registerComponent("video-autoplay", {
         init: function () {
-          const video = document.querySelector("#futura-video");
           this.el.addEventListener("targetFound", () => {
             video.currentTime = 0;
             video.muted = true;
-            const tryPlay = () => {
-              video.play().catch(() => {
-                document.addEventListener("click", () => video.play(), { once: true });
-              });
-            };
-            tryPlay();
+            video.play().catch(() => {
+              btn.style.display = "block";
+            });
           });
           this.el.addEventListener("targetLost", () => {
             video.pause();
+            btn.style.display = "none";
           });
         },
       });
