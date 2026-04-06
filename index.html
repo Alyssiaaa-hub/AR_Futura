@@ -7,7 +7,7 @@
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body { margin: 0; overflow: hidden; background: #000; font-family: 'Trebuchet MS', sans-serif; }
 
     #overlay {
@@ -27,10 +27,21 @@
     #overlay-inner {
       position: relative;
       z-index: 1001;
-      display: flex; flex-direction: column; align-items: center; gap: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      width: 100%;
+      text-align: center;
     }
 
-    #title-block { text-align: center; }
+    #title-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
 
     #title-block .label {
       color: #555;
@@ -38,6 +49,8 @@
       letter-spacing: 6px;
       text-transform: uppercase;
       margin-bottom: 10px;
+      text-align: center;
+      width: 100%;
     }
 
     #title-block h1 {
@@ -48,6 +61,8 @@
       text-transform: uppercase;
       margin: 0;
       line-height: 1;
+      text-align: center;
+      width: 100%;
     }
 
     #title-block .subtitle {
@@ -55,6 +70,8 @@
       font-size: 0.6rem;
       letter-spacing: 4px;
       margin-top: 10px;
+      text-align: center;
+      width: 100%;
     }
 
     #status {
@@ -64,6 +81,7 @@
       text-transform: uppercase;
       text-align: center;
       min-height: 16px;
+      width: 100%;
     }
 
     #start-btn {
@@ -96,6 +114,15 @@
     #start-btn:hover::before { transform: scaleX(1); }
     #start-btn:hover { color: #000; border-color: #fff; }
     #start-btn span { position: relative; z-index: 1; }
+
+    #btn-sub {
+      color: #444;
+      font-size: 0.55rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: -24px;
+      text-align: center;
+    }
 
     #line-top, #line-bottom {
       width: 1px; height: 60px;
@@ -171,12 +198,13 @@
     <div id="overlay-inner">
       <div id="line-top"></div>
       <div id="title-block">
-        <div class="label">Expérience augmentée</div>
+        <div class="label">Augmented experience | Expérience augmentée</div>
         <h1>Futura</h1>
         <div class="subtitle">1927 — Paul Renner</div>
       </div>
       <div id="status">Initialisation...</div>
-      <button id="start-btn"><span>Scanner</span></button>
+      <button id="start-btn"><span>Scan | Scanner</span></button>
+      <div id="btn-sub">Point your camera at the poster | Pointez vers l'affiche</div>
       <div id="line-bottom"></div>
     </div>
   </div>
@@ -271,7 +299,7 @@
       targetEl.setAttribute('smart-target', '');
       targetsContainer.appendChild(targetEl);
 
-      statusText.innerText = "Pointez vers l'affiche";
+      statusText.innerText = "Ready | Prêt";
       startBtn.style.display = 'block';
     }
 
