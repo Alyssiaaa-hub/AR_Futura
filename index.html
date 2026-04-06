@@ -83,23 +83,12 @@
       const sceneEl = document.querySelector("a-scene");
 
       startBtn.addEventListener("click", () => {
-        video.muted = true;
-        video.load();
-        startScreen.style.display = "none";
-        sceneEl.components["mindar-image"].start();
-      });
-
-      AFRAME.registerComponent("video-autoplay", {
-        init: function () {
-          this.el.addEventListener("targetFound", () => {
-            video.currentTime = 0;
-            video.play().catch(e => console.log(e));
-          });
-          this.el.addEventListener("targetLost", () => {
-            video.pause();
-          });
-        },
-      });
-    </script>
-  </body>
-</html>
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(() => {
+            video.muted = true;
+            video.load();
+            startScreen.style.display = "none";
+            sceneEl.components["mindar-image"].start();
+          })
+          .catch(e => {
+            alert("Accès à la caméra refusé. Autorise la caméra dans les paramètres.");
