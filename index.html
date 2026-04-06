@@ -44,12 +44,14 @@
       <h1>FUTURA</h1>
       <button id="start-btn">DÉMARRER</button>
     </div>
+
     <a-scene
-      mindar-image="imageTargetSrc: targets.mind; autoStart: false;"
+      mindar-image="imageTargetSrc: targets.mind;"
       color-space="sRGB"
       renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
+      embedded
     >
       <a-assets>
         <video
@@ -76,19 +78,29 @@
         ></a-video>
       </a-entity>
     </a-scene>
+
     <script>
       const video = document.querySelector("#futura-video");
       const startBtn = document.querySelector("#start-btn");
       const startScreen = document.querySelector("#start-screen");
-      const sceneEl = document.querySelector("a-scene");
 
       startBtn.addEventListener("click", () => {
-        navigator.mediaDevices.getUserMedia({ video: true })
-          .then(() => {
-            video.muted = true;
-            video.load();
-            startScreen.style.display = "none";
-            sceneEl.components["mindar-image"].start();
-          })
-          .catch(e => {
-            alert("Accès à la caméra refusé. Autorise la caméra dans les paramètres.");
+        video.muted = true;
+        video.load();
+        startScreen.style.display = "none";
+      });
+
+      AFRAME.registerComponent("video-autoplay", {
+        init: function () {
+          this.el.addEventListener("targetFound", () => {
+            video.currentTime = 0;
+            video.play().catch(e => console.log(e));
+          });
+          this.el.addEventListener("targetLost", () => {
+            video.pause();
+          });
+        },
+      });
+    </script>
+  </body>
+</html>
