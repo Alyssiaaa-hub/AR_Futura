@@ -7,21 +7,110 @@
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Futura&display=swap');
+
+    * { box-sizing: border-box; }
+    body { margin: 0; overflow: hidden; background: #000; font-family: 'Trebuchet MS', sans-serif; }
+
+    canvas#stars {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 998; pointer-events: none;
+    }
+
     #overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.9); z-index: 999;
+      background: #000;
+      z-index: 999;
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      transition: opacity 0.3s ease-out;
+      transition: opacity 0.6s ease-out;
     }
-    #status { color: #fff; margin-bottom: 20px; text-align: center; padding: 0 20px; letter-spacing: 3px; }
+
+    #overlay-inner {
+      display: flex; flex-direction: column; align-items: center; gap: 40px;
+    }
+
+    #title-block {
+      text-align: center;
+    }
+
+    #title-block .label {
+      color: #555;
+      font-size: 0.65rem;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    #title-block h1 {
+      color: #fff;
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: 14px;
+      text-transform: uppercase;
+      margin: 0;
+      line-height: 1;
+    }
+
+    #title-block .subtitle {
+      color: #444;
+      font-size: 0.6rem;
+      letter-spacing: 4px;
+      margin-top: 10px;
+    }
+
+    #status {
+      color: #555;
+      font-size: 0.6rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      text-align: center;
+      min-height: 16px;
+    }
+
     #start-btn {
-      padding: 15px 40px; font-size: 1.2rem; font-weight: bold;
-      color: black; background: white; border: none;
-      cursor: pointer; display: none; letter-spacing: 2px;
+      position: relative;
+      padding: 16px 52px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #fff;
+      background: transparent;
+      border: 1px solid #333;
+      cursor: pointer;
+      overflow: hidden;
+      transition: border-color 0.3s, color 0.3s;
+      display: none;
     }
+
+    #start-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.35s ease;
+      z-index: 0;
+    }
+
+    #start-btn:hover::before { transform: scaleX(1); }
+    #start-btn:hover { color: #000; border-color: #fff; }
+
+    #start-btn span { position: relative; z-index: 1; }
+
     .hidden { opacity: 0; pointer-events: none; }
+
+    #line-top, #line-bottom {
+      width: 1px; height: 60px;
+      background: linear-gradient(to bottom, transparent, #333);
+    }
+    #line-bottom {
+      background: linear-gradient(to top, transparent, #333);
+    }
   </style>
+
   <script>
     AFRAME.registerShader('chromakey', {
       schema: {
@@ -70,10 +159,7 @@
         const el = this.el;
         this.video = el.dataset.videoId ? document.getElementById(el.dataset.videoId) : null;
         el.addEventListener('targetFound', () => {
-          if (this.video) {
-            this.video.style.display = 'block';
-            this.video.play();
-          }
+          if (this.video) { this.video.style.display = 'block'; this.video.play(); }
         });
         el.addEventListener('targetLost', () => {
           if (this.video) this.video.pause();
@@ -83,9 +169,21 @@
   </script>
 </head>
 <body>
+
+  <canvas id="stars"></canvas>
+
   <div id="overlay">
-    <div id="status">Chargement...</div>
-    <button id="start-btn">DÉMARRER</button>
+    <div id="overlay-inner">
+      <div id="line-top"></div>
+      <div id="title-block">
+        <div class="label">Expérience augmentée</div>
+        <h1>Futura</h1>
+        <div class="subtitle">1927 — Paul Renner</div>
+      </div>
+      <div id="status">Initialisation...</div>
+      <button id="start-btn"><span>Scanner</span></button>
+      <div id="line-bottom"></div>
+    </div>
   </div>
 
   <a-scene
@@ -100,6 +198,48 @@
   </a-scene>
 
   <script>
+    // ── Étoiles ──
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 80; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 0.8 + 0.2,
+          alpha: Math.random(),
+          speed: Math.random() * 0.003 + 0.001
+        });
+      }
+    }
+
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      stars.forEach(s => {
+        s.alpha += s.speed;
+        if (s.alpha > 1 || s.alpha < 0) s.speed *= -1;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${s.alpha * 0.4})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(drawStars);
+    }
+
+    resizeCanvas();
+    initStars();
+    drawStars();
+    window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+
+    // ── AR ──
     const assetsContainer = document.getElementById('assets-loader');
     const targetsContainer = document.getElementById('targets-container');
     const startBtn = document.getElementById('start-btn');
@@ -136,7 +276,7 @@
       targetEl.setAttribute('smart-target', '');
       targetsContainer.appendChild(targetEl);
 
-      statusText.innerText = "Prêt. Cliquez pour démarrer.";
+      statusText.innerText = "Pointez vers l'affiche";
       startBtn.style.display = 'block';
     }
 
