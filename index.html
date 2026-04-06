@@ -1,106 +1,157 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Futura AR</title>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image.prod.js"></script>
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-    <style>
-      * { margin: 0; padding: 0; }
-      body { overflow: hidden; background: black; }
-      #start-screen {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: black;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 999;
-        font-family: sans-serif;
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Futura AR</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9); z-index: 999;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      transition: opacity 0.3s ease-out;
+    }
+    #status { color: #fff; margin-bottom: 20px; text-align: center; padding: 0 20px; letter-spacing: 3px; }
+    #start-btn {
+      padding: 15px 40px; font-size: 1.2rem; font-weight: bold;
+      color: black; background: white; border: none;
+      cursor: pointer; display: none; letter-spacing: 2px;
+    }
+    .hidden { opacity: 0; pointer-events: none; }
+  </style>
+  <script>
+    AFRAME.registerShader('chromakey', {
+      schema: {
+        src: {type: 'map', is: 'uniform'},
+        color: {default: {x: 0.1, y: 0.9, z: 0.2}, type: 'vec3', is: 'uniform'},
+        transparent: {default: true, is: 'uniform'}
+      },
+      init: function (data) {
+        var videoTexture = new THREE.VideoTexture(data.src);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBAFormat;
+        this.material = new THREE.ShaderMaterial({
+          uniforms: {
+            color: { type: 'c', value: new THREE.Color(data.color.x, data.color.y, data.color.z) },
+            src: { type: 't', value: videoTexture }
+          },
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            precision mediump float;
+            uniform vec3 color;
+            uniform sampler2D src;
+            varying vec2 vUv;
+            void main() {
+              vec4 tex = texture2D(src, vUv);
+              float alpha = (length(tex.rgb - color) - 0.5) * 7.0;
+              gl_FragColor = vec4(tex.rgb, alpha);
+            }
+          `,
+          transparent: data.transparent,
+          side: THREE.FrontSide
+        });
+      },
+      update: function (data) {
+        this.material.uniforms.color.value.setRGB(data.color.x, data.color.y, data.color.z);
       }
-      #start-screen h1 {
-        font-size: 28px;
-        margin-bottom: 40px;
-        letter-spacing: 4px;
+    });
+
+    AFRAME.registerComponent('smart-target', {
+      init: function() {
+        const el = this.el;
+        this.video = el.dataset.videoId ? document.getElementById(el.dataset.videoId) : null;
+        el.addEventListener('targetFound', () => {
+          if (this.video) {
+            this.video.style.display = 'block';
+            this.video.play();
+          }
+        });
+        el.addEventListener('targetLost', () => {
+          if (this.video) this.video.pause();
+        });
       }
-      #start-btn {
-        background: white;
-        color: black;
-        border: none;
-        padding: 16px 40px;
-        font-size: 16px;
-        letter-spacing: 2px;
-        cursor: pointer;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="start-screen">
-      <h1>FUTURA</h1>
-      <button id="start-btn">DÉMARRER</button>
-    </div>
+    });
+  </script>
+</head>
+<body>
+  <div id="overlay">
+    <div id="status">Chargement...</div>
+    <button id="start-btn">DÉMARRER</button>
+  </div>
 
-    <a-scene
-      mindar-image="imageTargetSrc: targets.mind;"
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-      embedded
-    >
-      <a-assets>
-        <video
-          id="futura-video"
-          src="anim.mp4"
-          preload="auto"
-          loop="false"
-          crossorigin="anonymous"
-          playsinline
-          muted
-          webkit-playsinline
-        ></video>
-      </a-assets>
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-video
-          src="#futura-video"
-          position="0 0 0"
-          width="1"
-          height="1.414"
-          rotation="0 0 0"
-          material="shader: flat"
-          video-autoplay
-        ></a-video>
-      </a-entity>
-    </a-scene>
+  <a-scene
+    mindar-image="imageTargetSrc: ./assets/targets.mind; uiScanning: yes; maxTrack: 1;"
+    color-space="sRGB"
+    renderer="colorManagement: true; physicallyCorrectLights: false; antialias: false; precision: mediump;"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+    <a-assets id="assets-loader" timeout="10000"></a-assets>
+    <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
+    <a-entity id="targets-container"></a-entity>
+  </a-scene>
 
-    <script>
-      const video = document.querySelector("#futura-video");
-      const startBtn = document.querySelector("#start-btn");
-      const startScreen = document.querySelector("#start-screen");
+  <script>
+    const assetsContainer = document.getElementById('assets-loader');
+    const targetsContainer = document.getElementById('targets-container');
+    const startBtn = document.getElementById('start-btn');
+    const statusText = document.getElementById('status');
 
-      startBtn.addEventListener("click", () => {
-        video.muted = true;
-        video.load();
-        startScreen.style.display = "none";
+    async function initExperience() {
+      const video = document.createElement('video');
+      video.id = 'video-0';
+      video.src = './assets/0.mp4';
+      video.setAttribute('preload', 'auto');
+      video.setAttribute('loop', 'true');
+      video.setAttribute('crossorigin', 'anonymous');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.muted = true;
+      video.setAttribute('muted', '');
+      assetsContainer.appendChild(video);
+
+      const targetEl = document.createElement('a-entity');
+      targetEl.setAttribute('mindar-image-target', 'targetIndex: 0');
+      targetEl.dataset.videoId = 'video-0';
+
+      const videoPlane = document.createElement('a-entity');
+      videoPlane.setAttribute('geometry', 'primitive: plane; width: 1; height: 1.414');
+      videoPlane.setAttribute('position', '0 0 0');
+      videoPlane.setAttribute('material', 'shader: chromakey; src: #video-0; color: 0 1 0; transparent: true');
+      targetEl.appendChild(videoPlane);
+
+      video.addEventListener('loadedmetadata', () => {
+        const newHeight = video.videoHeight / video.videoWidth;
+        videoPlane.setAttribute('geometry', {primitive: 'plane', width: 1, height: newHeight});
+      }, { once: true });
+
+      targetEl.setAttribute('smart-target', '');
+      targetsContainer.appendChild(targetEl);
+
+      statusText.innerText = "Prêt. Cliquez pour démarrer.";
+      startBtn.style.display = 'block';
+    }
+
+    initExperience();
+
+    startBtn.addEventListener('click', () => {
+      document.getElementById('overlay').classList.add('hidden');
+      const vids = document.querySelectorAll('video');
+      vids.forEach(v => {
+        const p = v.play();
+        if (p !== undefined) p.then(() => v.pause()).catch(e => console.error(e));
       });
-
-      AFRAME.registerComponent("video-autoplay", {
-        init: function () {
-          this.el.addEventListener("targetFound", () => {
-            video.currentTime = 0;
-            video.play().catch(e => console.log(e));
-          });
-          this.el.addEventListener("targetLost", () => {
-            video.pause();
-          });
-        },
-      });
-    </script>
-  </body>
+      const arSys = document.querySelector('a-scene').systems['mindar-image-system'];
+      if (arSys) arSys.start();
+    });
+  </script>
+</body>
 </html>
