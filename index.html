@@ -7,16 +7,8 @@
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Futura&display=swap');
-
     * { box-sizing: border-box; }
     body { margin: 0; overflow: hidden; background: #000; font-family: 'Trebuchet MS', sans-serif; }
-
-    canvas#stars {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: 998; pointer-events: none;
-    }
 
     #overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -26,13 +18,19 @@
       transition: opacity 0.6s ease-out;
     }
 
+    canvas#stars {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1000; pointer-events: none;
+    }
+
     #overlay-inner {
+      position: relative;
+      z-index: 1001;
       display: flex; flex-direction: column; align-items: center; gap: 40px;
     }
 
-    #title-block {
-      text-align: center;
-    }
+    #title-block { text-align: center; }
 
     #title-block .label {
       color: #555;
@@ -77,7 +75,7 @@
       text-transform: uppercase;
       color: #fff;
       background: transparent;
-      border: 1px solid #333;
+      border: 1px solid #444;
       cursor: pointer;
       overflow: hidden;
       transition: border-color 0.3s, color 0.3s;
@@ -97,10 +95,7 @@
 
     #start-btn:hover::before { transform: scaleX(1); }
     #start-btn:hover { color: #000; border-color: #fff; }
-
     #start-btn span { position: relative; z-index: 1; }
-
-    .hidden { opacity: 0; pointer-events: none; }
 
     #line-top, #line-bottom {
       width: 1px; height: 60px;
@@ -109,6 +104,8 @@
     #line-bottom {
       background: linear-gradient(to top, transparent, #333);
     }
+
+    .hidden { opacity: 0; pointer-events: none; }
   </style>
 
   <script>
@@ -170,8 +167,6 @@
 </head>
 <body>
 
-  <canvas id="stars"></canvas>
-
   <div id="overlay">
     <div id="overlay-inner">
       <div id="line-top"></div>
@@ -186,6 +181,8 @@
     </div>
   </div>
 
+  <canvas id="stars"></canvas>
+
   <a-scene
     mindar-image="imageTargetSrc: ./assets/targets.mind; uiScanning: yes; maxTrack: 1;"
     color-space="sRGB"
@@ -198,7 +195,6 @@
   </a-scene>
 
   <script>
-    // ── Étoiles ──
     const canvas = document.getElementById('stars');
     const ctx = canvas.getContext('2d');
     let stars = [];
@@ -239,7 +235,6 @@
     drawStars();
     window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
 
-    // ── AR ──
     const assetsContainer = document.getElementById('assets-loader');
     const targetsContainer = document.getElementById('targets-container');
     const startBtn = document.getElementById('start-btn');
