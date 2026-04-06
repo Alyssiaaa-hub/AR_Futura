@@ -9,26 +9,43 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     <style>
       * { margin: 0; padding: 0; }
-      body { overflow: hidden; }
-      #play-btn {
+      body { overflow: hidden; background: black; }
+      #start-screen {
         position: fixed;
-        bottom: 40px;
-        left: 50%;
-        transform: translateX(-50%);
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: black;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         z-index: 999;
+        font-family: sans-serif;
+      }
+      #start-screen h1 {
+        font-size: 28px;
+        margin-bottom: 40px;
+        letter-spacing: 4px;
+      }
+      #start-btn {
         background: white;
+        color: black;
         border: none;
-        padding: 14px 32px;
-        font-size: 18px;
-        border-radius: 30px;
-        display: none;
+        padding: 16px 40px;
+        font-size: 16px;
+        letter-spacing: 2px;
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
-    <button id="play-btn">▶ Lancer</button>
+    <div id="start-screen">
+      <h1>FUTURA</h1>
+      <button id="start-btn">DÉMARRER</button>
+    </div>
     <a-scene
-      mindar-image="imageTargetSrc: targets.mind; autoStart: true;"
+      mindar-image="imageTargetSrc: targets.mind; autoStart: false;"
       color-space="sRGB"
       renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
@@ -61,25 +78,25 @@
     </a-scene>
     <script>
       const video = document.querySelector("#futura-video");
-      const btn = document.querySelector("#play-btn");
+      const startBtn = document.querySelector("#start-btn");
+      const startScreen = document.querySelector("#start-screen");
+      const sceneEl = document.querySelector("a-scene");
 
-      btn.addEventListener("click", () => {
-        video.play();
-        btn.style.display = "none";
+      startBtn.addEventListener("click", () => {
+        video.muted = true;
+        video.load();
+        startScreen.style.display = "none";
+        sceneEl.components["mindar-image"].start();
       });
 
       AFRAME.registerComponent("video-autoplay", {
         init: function () {
           this.el.addEventListener("targetFound", () => {
             video.currentTime = 0;
-            video.muted = true;
-            video.play().catch(() => {
-              btn.style.display = "block";
-            });
+            video.play().catch(e => console.log(e));
           });
           this.el.addEventListener("targetLost", () => {
             video.pause();
-            btn.style.display = "none";
           });
         },
       });
